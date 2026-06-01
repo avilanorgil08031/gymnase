@@ -5,7 +5,14 @@ import { useConfirm, Select } from "../../components/ui";
 
 const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
 const STATUS_OPTIONS = [{ value: "", label: "Tous statuts" }, { value: "ACTIVE", label: "Actif" }, { value: "PENDING", label: "En attente" }, { value: "EXPIRED", label: "Expire" }, { value: "CANCELLED", label: "Annule" }];
-const PAY_OPTIONS = [{ value: "CASH", label: "Cash" }, { value: "WAVE", label: "Wave" }, { value: "ORANGE_MONEY", label: "Orange Money" }];
+const PAY_OPTIONS = [
+  { value: "CASH", label: "Cash" },
+  { value: "WAVE", label: "Wave" },
+  { value: "ORANGE_MONEY", label: "Orange Money" },
+  { value: "MTN_MONEY", label: "MTN Money" },
+  { value: "CARD", label: "Carte" },
+  { value: "BANK_TRANSFER", label: "Virement bancaire" },
+];
 
 export function AdminSubscriptions() {
   const [subs, setSubs] = useState<any[]>([]);

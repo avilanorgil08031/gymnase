@@ -1,5 +1,8 @@
 import { query } from "../config/database.js";
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+const cronTimers: NodeJS.Timeout[] = [];
+
 // ── Expiration des abonnements ─────────────────────────────────
 
 export async function expireSubscriptions() {
@@ -44,6 +47,14 @@ export async function expireSubscriptions() {
     console.error("[CRON] expireSubscriptions error:", err);
     return { expired_count: 0 };
   }
+}
+
+async function runDailyTasks() {
+  await expireSubscriptions();
+  await remindExpiringSubscriptions();
+  await remindPendingPayments();
+  await alertInactiveMembers();
+  await autoGenerateInvoices();
 }
 
 // ── Rappel abonnement expire dans 3 jours ──────────────────────
@@ -188,21 +199,24 @@ async function autoGenerateInvoices() {
 export function startCronJobs() {
   console.log("[CRON] Lancement des taches automatiques...");
 
-  // Au demarrage
-  expireSubscriptions();
-  remindExpiringSubscriptions();
-  remindPendingPayments();
-  alertInactiveMembers();
-  autoGenerateInvoices();
+  if (cronTimers.length > 0) {
+    console.log("[CRON] Taches automatiques deja demarrees");
+    return;
+  }
 
-  // Toutes les heures
-  setInterval(() => {
-    expireSubscriptions();
-    remindExpiringSubscriptions();
-    remindPendingPayments();
-    alertInactiveMembers();
-    autoGenerateInvoices();
-  }, 60 * 60 * 1000);
+  runDailyTasks().catch((err) => console.error("[CRON] daily tasks error:", err));
 
-  console.log("[CRON] Taches automatiques demarrees (4 jobs, intervalle: 1h)");
+  cronTimers.push(setInterval(() => {
+    runDailyTasks().catch((err) => console.error("[CRON] daily tasks error:", err));
+  }, DAY_MS));
+
+  console.log("[CRON] Taches automatiques demarrees (5 jobs, intervalle: 24h)");
+}
+
+export function stopCronJobs() {
+  while (cronTimers.length > 0) {
+    const timer = cronTimers.pop();
+    if (timer) clearInterval(timer);
+  }
+  console.log("[CRON] Taches automatiques arretees");
 }

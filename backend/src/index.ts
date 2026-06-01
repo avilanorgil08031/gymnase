@@ -2,14 +2,16 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import type { Server } from "http";
 import { env } from "./config/env.js";
-import { testConnection } from "./config/database.js";
+import { pool, testConnection } from "./config/database.js";
 import { sanitizeInputs } from "./middlewares/validate.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
-import { startCronJobs } from "./services/cronJobs.js";
+import { startCronJobs, stopCronJobs } from "./services/cronJobs.js";
 import routes from "./routes/index.js";
 
 const app = express();
+let server: Server | null = null;
 
 // Security headers
 app.use(helmet());
@@ -69,7 +71,6 @@ app.use((_req, res) => {
   res.status(404).json({ success: false, message: "Route introuvable", error: "NOT_FOUND" });
 });
 
-// Start server
 async function start() {
   const dbOk = await testConnection();
   if (!dbOk) {
@@ -78,21 +79,40 @@ async function start() {
     process.exit(1);
   }
 
-  // Demarrer les taches automatiques (expiration abonnements)
   startCronJobs();
 
-  app.listen(env.port, () => {
-    console.log(`
-╔══════════════════════════════════════════╗
-║       ELITE GYM API - Backend            ║
-╠══════════════════════════════════════════╣
-║  Port:     ${String(env.port).padEnd(28)}║
-║  Env:      ${env.nodeEnv.padEnd(28)}║
-║  DB:       ${env.db.name.padEnd(28)}║
-║  Frontend: ${env.frontendUrl.padEnd(28)}║
-╚══════════════════════════════════════════╝
-    `);
+  server = app.listen(env.port, () => {
+    console.log(`[SERVER] Elite Gym API running on port ${env.port} (${env.nodeEnv})`);
+    console.log(`[SERVER] DB: ${env.db.name} @ ${env.db.host}:${env.db.port}`);
+    console.log(`[SERVER] Frontend: ${env.frontendUrl}`);
   });
 }
 
-start();
+async function shutdown(signal: NodeJS.Signals) {
+  console.log(`[SERVER] ${signal} recu, arret en cours...`);
+  stopCronJobs();
+
+  await new Promise<void>((resolve) => {
+    if (!server) {
+      resolve();
+      return;
+    }
+
+    server.close((err) => {
+      if (err) console.error("[SERVER] Erreur fermeture HTTP:", err);
+      resolve();
+    });
+  });
+
+  await pool.end();
+  console.log("[SERVER] Arret termine");
+  process.exit(0);
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
+
+start().catch((err) => {
+  console.error("[SERVER] Erreur au demarrage:", err);
+  process.exit(1);
+});

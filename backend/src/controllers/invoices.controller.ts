@@ -3,6 +3,7 @@ import { query } from "../config/database.js";
 import { success, error, paginated, ErrorCode } from "../utils/response.js";
 import { logActivity } from "../services/activityLog.js";
 import { getAllSettings } from "../services/settings.js";
+import { canAccessUserResource, isAdminRole } from "../utils/access.js";
 
 function generateInvoiceNumber(): string {
   const date = new Date();
@@ -92,6 +93,11 @@ export async function getInvoicePdf(req: Request, res: Response) {
       return;
     }
 
+    if (!isAdminRole(req.user?.role) && req.user?.userId !== Number(invoice.user_id)) {
+      error(res, "Acces refuse", 403, ErrorCode.FORBIDDEN);
+      return;
+    }
+
     // Recuperer les infos de la salle
     const settings = await getAllSettings();
 
@@ -167,6 +173,7 @@ export async function getInvoices(req: Request, res: Response) {
 export async function getUserInvoices(req: Request, res: Response) {
   try {
     const { userId } = req.params;
+    if (!canAccessUserResource(req, res, userId)) return;
 
     const invoices = await query<any[]>(
       `SELECT i.*, p.payment_method FROM invoices i

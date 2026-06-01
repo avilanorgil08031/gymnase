@@ -3,6 +3,7 @@ import { z } from "zod";
 import { query } from "../config/database.js";
 import { success, error, paginated, ErrorCode } from "../utils/response.js";
 import { logActivity } from "../services/activityLog.js";
+import { canAccessUserResource } from "../utils/access.js";
 
 // ── Schemas ────────────────────────────────────────────────────
 
@@ -65,6 +66,7 @@ export async function getPayments(req: Request, res: Response) {
 export async function getUserPayments(req: Request, res: Response) {
   try {
     const { userId } = req.params;
+    if (!canAccessUserResource(req, res, userId)) return;
 
     const payments = await query<any[]>(
       `SELECT p.*, mp.name as plan_name

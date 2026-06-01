@@ -4,6 +4,7 @@ import { query } from "../config/database.js";
 import { success, error, paginated, ErrorCode } from "../utils/response.js";
 import { logActivity } from "../services/activityLog.js";
 import { getSettingNumber } from "../services/settings.js";
+import { canAccessUserResource } from "../utils/access.js";
 
 // ── Schemas ────────────────────────────────────────────────────
 
@@ -92,6 +93,8 @@ export async function getTodayReservations(req: Request, res: Response) {
 export async function getUserReservations(req: Request, res: Response) {
   try {
     const { userId } = req.params;
+    if (!canAccessUserResource(req, res, userId)) return;
+
     const status = req.query.status as string || "";
     const upcoming = req.query.upcoming === "true";
 

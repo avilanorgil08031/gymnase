@@ -4,7 +4,14 @@ import { Plus, Edit2, Trash2, ShoppingBag } from "lucide-react";
 import { useConfirm, Select } from "../../components/ui";
 
 const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
-const PAY_OPTIONS = [{ value: "CASH", label: "Cash" }, { value: "WAVE", label: "Wave" }, { value: "ORANGE_MONEY", label: "Orange Money" }, { value: "CARD", label: "Carte" }];
+const PAY_OPTIONS = [
+  { value: "CASH", label: "Cash" },
+  { value: "WAVE", label: "Wave" },
+  { value: "ORANGE_MONEY", label: "Orange Money" },
+  { value: "MTN_MONEY", label: "MTN Money" },
+  { value: "CARD", label: "Carte" },
+  { value: "BANK_TRANSFER", label: "Virement bancaire" },
+];
 
 export function AdminBoutique() {
   const [products, setProducts] = useState<any[]>([]);

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { z } from "zod";
 import { query } from "../config/database.js";
 import { success, error, paginated } from "../utils/response.js";
+import { canAccessUserResource } from "../utils/access.js";
 
 // ── Schemas ────────────────────────────────────────────────────
 
@@ -56,6 +57,7 @@ export async function getSubscriptions(req: Request, res: Response) {
 export async function getUserSubscriptions(req: Request, res: Response) {
   try {
     const { userId } = req.params;
+    if (!canAccessUserResource(req, res, userId)) return;
 
     const subs = await query<any[]>(
       `SELECT s.*, mp.name as plan_name, mp.price as plan_price, mp.duration_days

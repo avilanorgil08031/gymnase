@@ -16,7 +16,7 @@ const productSchema = z.object({
 
 const saleSchema = z.object({
   user_id: z.number().int().positive().optional().nullable(),
-  payment_method: z.enum(["CASH", "WAVE", "ORANGE_MONEY", "MTN_MONEY", "CARD"]),
+  payment_method: z.enum(["CASH", "WAVE", "ORANGE_MONEY", "MTN_MONEY", "CARD", "BANK_TRANSFER"]),
   items: z.array(z.object({
     product_id: z.number().int().positive(),
     quantity: z.number().int().positive(),

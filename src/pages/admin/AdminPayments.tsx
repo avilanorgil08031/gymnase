@@ -20,6 +20,7 @@ const METHOD_OPTIONS = [
   { value: "ORANGE_MONEY", label: "Orange Money" },
   { value: "MTN_MONEY", label: "MTN Money" },
   { value: "CARD", label: "Carte" },
+  { value: "BANK_TRANSFER", label: "Virement bancaire" },
 ];
 
 export function AdminPayments() {

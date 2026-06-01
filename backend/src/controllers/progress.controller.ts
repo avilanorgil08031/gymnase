@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { z } from "zod";
 import { query } from "../config/database.js";
 import { success, error, ErrorCode } from "../utils/response.js";
+import { canAccessUserResource } from "../utils/access.js";
 
 const progressSchema = z.object({
   weight: z.number().positive().optional().nullable(),
@@ -17,6 +18,8 @@ const progressSchema = z.object({
 export async function getUserProgress(req: Request, res: Response) {
   try {
     const { userId } = req.params;
+    if (!canAccessUserResource(req, res, userId)) return;
+
     const entries = await query<any[]>(
       "SELECT * FROM member_progress WHERE user_id = ? ORDER BY recorded_at DESC",
       [userId]
